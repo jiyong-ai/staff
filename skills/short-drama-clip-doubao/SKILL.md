@@ -35,7 +35,7 @@ description: 即用数字员工（短剧解说视频剪辑，豆包云电脑专�
 
     python3 -c "import urllib.request as u;exec(u.urlopen('https://raw.githubusercontent.com/jiyong-ai/staff/main/install.py').read())"
 
-学员消息里给过订单号时，加上 `--order "<订单号>"`，只填订单号本身；没给就不加，装好后再问学员。
+学员的安装话术末尾有「订单号:」。后面填了订单号时，加上 `--order "<订单号>"`，只填订单号本身，不要把整句话填进来；空着或还是 `__` 时不加这个参数，装好后再问学员。
 
 这条命令只用 Python 自带的功能，不需要 pip。它会先确认是豆包云电脑、校验安装包的发版签名，校验不过就不安装。运行这条命令，不要改写它，也不要自己拼装安装文件。
 
