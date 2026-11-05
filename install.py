@@ -636,7 +636,7 @@ def install(a) -> int:
     if a.order:
         return run_clipflow(home, app, ["setup", "--order", a.order])
     finish("installed_need_order",
-           "即用创作小助手装好啦！请发我你的抖音订单编号（抖音订单详情里的一串数字），我用它激活。",
+           "即用创作小助手装好啦！请发我你的商城订单编号（商城订单详情里的一串数字），我用它激活。",
            "拿到订单号后运行："
            + quote([sys.executable, app / "scripts" / "clipflow.py", "setup", "--order", "<用户发来的订单号原话>"]))
 
