@@ -3,7 +3,7 @@
 
 两种运行方式：
   - 一行命令（技能库里的 SKILL.md 首次使用时、install.md、重装命令）：
-    python3 -c "import urllib.request as u;exec(u.urlopen('<分发地址>/install.py').read())" --skills-dir "<你的 Skill 目录>" [--order "<学员原话>"]
+    python3 -c "import urllib.request as u;exec(u.urlopen('<分发地址>/install.py').read())" --skills-dir "<你的 Skill 目录>" [--order "<用户原话>"] [--terms-agreed <版本>]
   - 以文件方式从技能目录运行：python3 <技能目录>/install.py [--order "<订单号>"]（老的 Gitee 分发仓库就是这样）。
 
 安装器做的事：
@@ -14,8 +14,10 @@
      薄入口，name 不同的目录不碰；本文件所在的安装器目录在技能库里却叫别的名字时，写好入口后删掉它；
      同一目录下我们以前写的旧入口（OLD_SKILL_NAMES，name 相同且引用 clipflow.py）删掉，免得 agent 还触发它；
      --upload-zip：另在桌面（~/Desktop 或 ~/桌面）生成 short-drama-clip-doubao.zip，给只能在界面上传 Skill 的助手用；
-  4. 本机激活过 → 运行 upgrade 补全完整功能（装的已经是完整包时改为运行 status）；
-     带了 --order → 运行 setup 激活；都没有 → 请学员发订单号。
+  4. 带了 --terms-agreed <版本>：用户在安装之前已经同意过这一版用户服务协议（install.md、SKILL.md 先请用户同意，
+     同意后才让运行安装命令），记进 <数据目录>/consent.json，装好后不再问第二次；
+  5. 本机激活过 → 运行 upgrade 补全完整功能（装的已经是完整包时改为运行 status）；
+     带了 --order → 运行 setup 激活；都没有 → 请用户发订单号。
   0. 先确认是豆包云电脑（_doubao_check）；不是就 unsupported_env 结束，不下载、不写任何文件。
 最后三行固定是 STATUS / SAY / NEXT（和 clipflow.py 一样）。
 
@@ -42,6 +44,7 @@ import types
 import urllib.error
 import urllib.request
 import zipfile
+from datetime import datetime
 from pathlib import Path
 
 # 分发地址（GitHub 公开仓库 raw 根地址），由 scripts/release.py build 填入；源码里为空，只能 --from 本地安装
@@ -66,7 +69,7 @@ _SHA256_PREFIX = bytes.fromhex("3031300d060960864801650304020105000420")
 
 # ── 豆包云电脑检查（与 scripts/doubao_env.py 相同：本文件被 exec 运行，导入不了它；tests/skill/test_doubao_env.py 核对两处一致）──
 PLATFORM_BROWSER = "/opt/browser/chrome"
-UNSUPPORTED_SAY = "这个版本是豆包云电脑专用的，这台电脑用不了。请联系即用客服获取普通版安装链接。"
+UNSUPPORTED_SAY = "当前环境暂不支持剪辑，请在豆包对话处切换到豆包工作云电脑～"
 
 
 def _doubao_check():
@@ -81,7 +84,7 @@ def _doubao_check():
 
 
 def _unsupported_next(reason):
-    return "把 SAY 转告学员，流程暂停，不要尝试绕过。把下面的检查结果原样回报给即用客服：" + str(reason)[:200]
+    return "把 SAY 转告用户，不要尝试绕过。用户切换到豆包工作云电脑后，在那边再说一次。检查结果（排查用，不用发给用户；用户或即用客服问起时如实说）：" + str(reason)[:200]
 
 
 # ── 输出协议（与 clipflow.py 相同，安装器不能 import clipflow）──
@@ -186,7 +189,7 @@ def verify_sig(obj, pubkey=None) -> bool:
     return hmac.compare_digest(pow(s, e, n).to_bytes(k, "big"), expected)
 
 
-# ── 下载（走系统代理：学员可能只能通过代理上网；urllib 默认跟随 302）──
+# ── 下载（走系统代理：用户可能只能通过代理上网；urllib 默认跟随 302）──
 def fetch(url: str) -> bytes:
     last = None
     for i in range(RETRIES + 1):
@@ -347,6 +350,81 @@ def render_entry(app: Path, reinstall: str) -> str:
             .replace("{{INSTALL_CMD}}", reinstall))
 
 
+def _reinstall_of(text: str) -> str:
+    """旧入口末尾的重装命令：最后一个四空格缩进、并且引用 install.py 的行（模板里 {{INSTALL_CMD}} 那一行）；
+    更早的完整版说明里没有这样的行，返回空串"""
+    for line in reversed(text.replace("\r\n", "\n").split("\n")):
+        if re.match(r"^ {4}\S", line) and "install.py" in line:
+            return line.strip()
+    return ""
+
+
+def _skills_dir_of(reinstall: str):
+    """重装命令里当初带的 --skills-dir（老用户的自定义技能库）；没带或读不出返回 None"""
+    try:
+        parts = shlex.split(reinstall)
+    except ValueError:
+        return None
+    for i, p in enumerate(parts):
+        if p == "--skills-dir" and i + 1 < len(parts):
+            return Path(os.path.abspath(os.path.expanduser(parts[i + 1])))
+        if p.startswith("--skills-dir="):
+            return Path(os.path.abspath(os.path.expanduser(p[len("--skills-dir="):])))
+    return None
+
+
+def refresh_entries(app: Path, fallback: str) -> list:
+    """自动更新之后：把技能库里我们以前写的入口 SKILL.md 换成 app/entry 里的新模板（新的显示名、描述）。
+    要看的目录：豆包技能库、~/.agents/skills/，加上这些目录里旧入口的重装命令带的 --skills-dir（老用户当初的自定义目录）。
+    只换 SKILL.md 一个文件，不换整个目录（调用方可能待在这个目录里）；跳过：目录不存在（不新建）、软链接、
+    name 相同但不是我们写的（_is_our_old_entry 为假）、内容已经一样。重装命令沿用旧入口里的，读不出来用 fallback。
+    不打印任何东西；写不进去的目录记下原因，其余目录照常处理，最后抛 OSError（调用方下一条命令再试）。
+    返回这次写了的 SKILL.md"""
+    pending = [doubao_skills_dir(), shared_skills_dir()]
+    seen, written, errors = set(), [], []
+    while pending:
+        root = Path(os.path.abspath(str(pending.pop(0))))
+        if _real(root) in seen:
+            continue
+        seen.add(_real(root))
+        target = root / SKILL_NAME
+        entry = target / "SKILL.md"
+        if target.is_symlink() or not target.is_dir() or entry.is_symlink() or not _is_our_old_entry(target, SKILL_NAME):
+            continue
+        try:
+            old = entry.read_text(encoding="utf-8", errors="replace")
+            reinstall = _reinstall_of(old) or fallback
+            if not reinstall:
+                continue  # 旧入口里没有、也拿不到重装命令（源码目录开发时）：写出来的入口没法重装，宁可不动
+            custom = _skills_dir_of(reinstall)
+            if custom is not None:
+                pending.append(custom)
+            text = render_entry(app, reinstall)
+            if old == text:
+                continue
+            fd, tmp = tempfile.mkstemp(prefix=".SKILL.md.new-", dir=str(target))
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    f.write(text)
+                try:
+                    os.chmod(tmp, entry.stat().st_mode & 0o777)
+                except OSError:
+                    pass
+                os.replace(tmp, str(entry))
+            except BaseException:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise
+            written.append(entry)
+        except OSError as e:
+            errors.append(f"{entry}：{e}")
+    if errors:
+        raise OSError("；".join(errors))
+    return written
+
+
 def _real(p: Path) -> str:
     return os.path.realpath(str(p))
 
@@ -423,7 +501,7 @@ def write_entries(a, app: Path, reinstall: str) -> list:
 
 
 def reinstall_cmd(a) -> str:
-    """写进薄入口的重装命令：和学员发来的那条一样（不带订单号）"""
+    """写进薄入口的重装命令：和用户发来的那条一样（不带订单号）"""
     extra = (["--skills-dir", os.path.abspath(os.path.expanduser(a.skills_dir))] if a.skills_dir else []) \
         + (["--upload-zip"] if a.upload_zip else [])
     if DIST_BASE:
@@ -468,9 +546,35 @@ def run_clipflow(home: Path, app: Path, argv) -> int:
     sys.stdout.write(out)
     sys.stdout.flush()
     if not re.search(r"^STATUS: ", out, re.M):
-        finish("install_failed", "安装好了，但即用数字员工没能正常启动，请联系即用客服。",
+        finish("install_failed", "安装好了，但即用创作小助手没能正常启动，请联系即用客服。",
                f"运行 clipflow.py {argv[0]} 出错，把下面的错误原文转告即用客服：{out.strip()[-300:]}", 1)
     return r.returncode
+
+
+# ── 用户服务协议的同意记录（和 clipflow.py 的 consent.json 同一个格式：{version, agreed_at, ts}）──
+CONSENT_FILE = "consent.json"
+
+
+def record_consent(home: Path, version: int):
+    """安装前用户已同意第 version 版协议：记下来，已记着更高版本时保留更高的。写不进去只记一笔，
+    装好后 clipflow 会再请用户同意一次（不影响安装）"""
+    p = home / CONSENT_FILE
+    try:
+        old = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        old = {}
+    v = old.get("version") if isinstance(old, dict) else None
+    old_v = v if isinstance(v, int) and not isinstance(v, bool) else 0
+    now_dt = datetime.now()
+    rec = {"version": max(version, old_v), "agreed_at": now_dt.isoformat(timespec="seconds"),
+           "ts": int(now_dt.timestamp())}
+    try:
+        home.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(p.suffix + ".tmp")
+        tmp.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(str(tmp), str(p))
+    except OSError as e:
+        log(f"没记下用户同意的协议版本，装好后会再请用户确认一次（{str(e)[:200]}）")
 
 
 def install(a) -> int:
@@ -498,7 +602,7 @@ def install(a) -> int:
         try:
             m = upd.install_zip(zip_path, home, expect_sha256=info.get("sha256"))
         except upd.LockBusy:
-            finish("install_failed", "即用数字员工正在安装，我等一会儿再看看。",
+            finish("install_failed", "即用创作小助手正在安装，我等一会儿再看看。",
                    f"另一个安装或更新正在进行，等半分钟后重新运行安装命令：{reinstall}", 1)
         except upd.UpdateError as e:
             finish("install_failed", "安装没成功，我稍后再试一下；一直不行请联系即用客服。",
@@ -513,12 +617,14 @@ def install(a) -> int:
     except OSError:
         pass
     full = len(set(m["files"]) - set(m["bootstrap_files"])) > 0
-    log(f"即用数字员工 {m['version']} 已安装到 {app}（{'完整版' if full else '待激活'}）")
+    log(f"即用创作小助手 {m['version']} 已安装到 {app}（{'完整版' if full else '待激活'}）")
     try:
         write_entries(a, app, reinstall)
     except OSError as e:
         finish("install_failed", "安装没成功，我稍后再试一下；一直不行请联系即用客服。",
                f"写入 Skill 入口失败，检查目录权限后重新运行安装命令：{reinstall}（错误：{str(e)[:200]}）", 1)
+    if a.terms_agreed > 0:
+        record_consent(home, a.terms_agreed)
     if has_activation(home, app):
         if full:
             # 装的就是完整包（维护者 --from 核心包）：不用再下载，直接看状态。status 开头会照常定期检查新版，
@@ -530,9 +636,9 @@ def install(a) -> int:
     if a.order:
         return run_clipflow(home, app, ["setup", "--order", a.order])
     finish("installed_need_order",
-           "即用数字员工装好啦！请发我你的抖音订单编号（抖音订单详情里的一串数字），我用它激活。",
+           "即用创作小助手装好啦！请发我你的抖音订单编号（抖音订单详情里的一串数字），我用它激活。",
            "拿到订单号后运行："
-           + quote([sys.executable, app / "scripts" / "clipflow.py", "setup", "--order", "<学员发来的订单号原话>"]))
+           + quote([sys.executable, app / "scripts" / "clipflow.py", "setup", "--order", "<用户发来的订单号原话>"]))
 
 
 def main(argv=None) -> int:
@@ -546,13 +652,14 @@ def main(argv=None) -> int:
 
     def usage_error(message):
         log(f"参数错误：{message}")
-        raise Finish("usage_error", "", "检查安装命令的参数（--skills-dir、--order、--from、--upload-zip）后重新运行", 2)
+        raise Finish("usage_error", "", "检查安装命令的参数（--skills-dir、--order、--from、--upload-zip、--terms-agreed）后重新运行", 2)
 
     ap.error = usage_error
     ap.add_argument("--skills-dir", default="", help="当前 agent 的用户级 Skill 目录（不知道就省略）")
-    ap.add_argument("--order", default="", help="学员消息里的订单号（可直接传原话）")
+    ap.add_argument("--order", default="", help="用户消息里的订单号（可直接传原话）")
     ap.add_argument("--from", dest="from_zip", default="", help="从本地 zip 安装（维护者测试用）")
     ap.add_argument("--upload-zip", action="store_true", help="另在桌面生成入口 zip（只能界面上传 Skill 的 agent）")
+    ap.add_argument("--terms-agreed", type=int, default=0, help="用户安装前已同意的用户服务协议版本（安装说明里写好的数字）")
     try:
         return install(ap.parse_args(argv))
     except Finish as f:
