@@ -25,7 +25,7 @@ description: 即用创作小助手的短剧推广视频：用商城订单号激�
 
 安装之前先请用户看一下用户服务协议。运行安装命令之前，在这一轮最后一条回复里把下面这段话发给用户，然后结束这一轮，等用户回复：
 
-> 即用创作小助手帮你把选好的短剧剪成解说视频，经你确认后发布到你的账号，不会自己生产创作内容。你的账号登录只在你的豆包云电脑上，小助手不会保存你的账号密码等敏感信息。开始之前请先点开看一下[《即用创作小助手用户服务协议》](https://xld.jiaredou.com/clipflow-v3/plugin/terms)；同意的话回复我「同意」，不同意我就不安装，以后想用再跟我说一声就行。
+> 即用创作小助手帮你把选好的短剧剪成解说视频，经你确认后发布到你的账号，不会自己生产创作内容。你的账号登录只在你的豆包云电脑上，小助手不会保存你的账号密码等敏感信息。开始之前请先点开看一下[《即用创作小助手用户服务协议》](https://xld.jiaredou.com/clipflow-dev/plugin/terms)；同意的话回复我「同意」，不同意我就不安装，以后想用再跟我说一声就行。
 
 协议要作为可点击的链接发：链接文字只写协议名，不要把网址单独贴出来，也不要把协议内容贴给用户。
 
@@ -33,7 +33,7 @@ description: 即用创作小助手的短剧推广视频：用商城订单号激�
 
 ## 2. 运行安装命令
 
-    python3 -c "import urllib.request as u;exec(u.urlopen('https://raw.githubusercontent.com/jiyong-ai/staff/main/install.py').read())" --terms-agreed 2
+    python3 -c "import urllib.request as u;exec(u.urlopen('https://raw.githubusercontent.com/jiyong-ai/staff/dev/install.py').read())" --terms-agreed 2
 
 `--terms-agreed 2` 表示用户在安装之前已经同意了协议（上一节），照原样带上，不要去掉；装好后小助手就不会再让用户同意一遍。用户的安装话术末尾有「订单号:」。后面填了订单号时，加上 `--order "<订单号>"`，只填订单号本身，不要把整句话填进来；空着或还是 `__` 时不加这个参数，装好后再问用户。
 
