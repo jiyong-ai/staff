@@ -49,7 +49,7 @@ from pathlib import Path
 
 # 分发地址（GitHub 公开仓库 raw 根地址），由 scripts/release.py build 填入；源码里为空，只能 --from 本地安装
 # --- dist-base begin ---
-DIST_BASE = "https://raw.githubusercontent.com/jiyong-ai/staff/main"
+DIST_BASE = "https://raw.githubusercontent.com/jiyong-ai/staff/dev"
 # --- dist-base end ---
 
 # --- release-pubkey begin ---
