@@ -8,7 +8,7 @@
 2. 把下面这句话发给它，末尾的 `__` 换成你的商城订单号（商城订单详情里的一串数字）：
 
 ```
-豆包你好，帮我安装Github上 jiyong-ai/staff 到技能库里;订单号:__
+豆包你好，帮我安装Github上 https://github.com/jiyong-ai/staff/tree/dev/skills/short-drama-clip-doubao 到技能库里;订单号:__
 ```
 
 豆包把技能放进技能库后，会接着请你看一下用户服务协议。
@@ -20,7 +20,7 @@
 熟悉命令行的话，也可以在豆包云电脑的终端里运行（需要 Node.js 22.20 或更新的版本）：
 
 ```sh
-npx skills add jiyong-ai/staff -g -a universal -y
+npx skills add https://github.com/jiyong-ai/staff/tree/dev/skills/short-drama-clip-doubao -g -a universal -y
 ```
 
 装好后新开一个豆包对话，说「开始」，它会先请你看一下用户服务协议。剪辑要在豆包工作云电脑上做，其他电脑上装了也运行不了。
