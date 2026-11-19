@@ -1,9 +1,9 @@
 {
-  "version": "3.1.22",
-  "file": "bootstrap/clipflow-bootstrap-3.1.22.zip",
-  "size": 55139,
-  "sha256": "21d0b282c70f81ea139f46312570908dc3bc7c4a1846687706bb73c1e2cf7cae",
+  "version": "3.1.23",
+  "file": "bootstrap/clipflow-bootstrap-3.1.23.zip",
+  "size": 55140,
+  "sha256": "be82253c9c7511e272fcd6ad00bd56996b0b66d28ed73281cb18e987fc408844",
   "min_python": "3.8",
   "publisher_min_python": "3.10",
-  "sig": "Y7SjcrX/GzNC1W8+TdYYzwoOz6PigIMrlN1gfwZRbMamAJqdki2g1KXYddvpkz755gwlnS2q3vLCIHhw48tCKdFUsyc0XGzzFq+Ngu07w5bhL5v6DpG3L0cn+9Lrpbp2uKkcQbcQe0ecJWL3yN7D1CQT+tkyYU9+P0lGYBa0NhnzExBMt6/XLx8juFN2bbLdoqM3fd8E9YBm92PapXSmZsXoNrCzBr26vpjtV9W0nQ13AcZSwCYphuz8lm6YSa/v4kG0oYIyHst9HhnX/YavYCN9uSu0R85mI8rjLPFBV7IfQK23+/cims1TEvV3nKx6T3nd3bSzwJDKXf31eMyRpTew3UvuUY9Yy+aXFLMCBL5nlGzYjLv0DjDihHT7jcWbL86F7BEs+aTq1jKsPpMj+DcWn41JXcC2GkkIasNCL/FT00im7cJtwyyGzkVgb9ys0QGQvweVKpiYaILY0IShgw8hkmaOnz+qfUtw/k56BFNPzcMBbGZ8X3L2ro6+TvIP"
+  "sig": "DI8y7OsajxuTY5+bPfcQFhviTDoVGt/FAIlZkObyRox3XhjR4VD96uIGVYTLjA8OJ7OYjqN05k+x+CaeW5e14FRwmvoo39qdzz6CKUc/0IfQPcIkZ5OHpL1V2u0SCkbyR5Ea8Q+p70+qeINu8wVOqp0eSqZmgVoy0bIu4NYChFomtkQ+TjPC70WSKAOMlFHP/MivLk+yvFX31ICB1pJYbnVio4x2k4YDTjMBBoIhZwVnm22iBe+yb66r+cCCOrZCp0OebzChPC34QX7WkAqY8PJvxjqk9P6XjN49keTSbiCFLn0m6ZoCsCQ+lSJwFrJhW1i3XncnO+6CRLPAujQLDl6OmjHMdpy1RZyRkFy64wk0FHdvaYkLPj/TkxTzXEqfzFoejc27LmMfYP2EG4dcKgAQIirfBpxqC0oT7VhoQ6UuDH98A3w0AfJpz7LqHzVT4x6kliPzIXjskVMejxHBv/bccp59WCtFskfFvMePCucjEcGvdJp2XxxdqD3jWRRi"
 }
