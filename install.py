@@ -546,7 +546,7 @@ def run_clipflow(home: Path, app: Path, argv) -> int:
     sys.stdout.write(out)
     sys.stdout.flush()
     if not re.search(r"^STATUS: ", out, re.M):
-        finish("install_failed", "安装好了，但即用创作小助手没能正常启动，请联系即用客服。",
+        finish("install_failed", "安装好了，但即用短剧助手没能正常启动，请联系即用客服。",
                f"运行 clipflow.py {argv[0]} 出错，把下面的错误原文转告即用客服：{out.strip()[-300:]}", 1)
     return r.returncode
 
@@ -602,7 +602,7 @@ def install(a) -> int:
         try:
             m = upd.install_zip(zip_path, home, expect_sha256=info.get("sha256"))
         except upd.LockBusy:
-            finish("install_failed", "即用创作小助手正在安装，我等一会儿再看看。",
+            finish("install_failed", "即用短剧助手正在安装，我等一会儿再看看。",
                    f"另一个安装或更新正在进行，等半分钟后重新运行安装命令：{reinstall}", 1)
         except upd.UpdateError as e:
             finish("install_failed", "安装没成功，我稍后再试一下；一直不行请联系即用客服。",
@@ -617,7 +617,7 @@ def install(a) -> int:
     except OSError:
         pass
     full = len(set(m["files"]) - set(m["bootstrap_files"])) > 0
-    log(f"即用创作小助手 {m['version']} 已安装到 {app}（{'完整版' if full else '待激活'}）")
+    log(f"即用短剧助手 {m['version']} 已安装到 {app}（{'完整版' if full else '待激活'}）")
     try:
         write_entries(a, app, reinstall)
     except OSError as e:
@@ -636,7 +636,7 @@ def install(a) -> int:
     if a.order:
         return run_clipflow(home, app, ["setup", "--order", a.order])
     finish("installed_need_order",
-           "即用创作小助手装好啦！请发我你的商城订单编号（商城订单详情里的一串数字），我用它激活。",
+           "即用短剧助手装好啦！请发我你的商城订单编号（商城订单详情里的一串数字），我用它激活。",
            "拿到订单号后运行："
            + quote([sys.executable, app / "scripts" / "clipflow.py", "setup", "--order", "<用户发来的订单号原话>"]))
 
